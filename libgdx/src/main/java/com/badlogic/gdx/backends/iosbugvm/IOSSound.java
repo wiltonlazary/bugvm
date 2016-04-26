@@ -18,7 +18,6 @@ package com.badlogic.gdx.backends.iosbugvm;
 
 import com.bugvm.apple.foundation.NSArray;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.backends.iosbugvm.objectal.ALBuffer;
 import com.badlogic.gdx.backends.iosbugvm.objectal.ALChannelSource;
@@ -131,11 +130,6 @@ public class IOSSound implements Sound {
 			source.setPan(pan);
 			source.setVolume(volume);
 		}
-	}
-
-	@Override
-	public void setPriority (long soundId, int priority) {
-		// TODO Auto-generated method stub
 	}
 
 	@Override

@@ -21,7 +21,6 @@ import com.bugvm.objc.ObjCRuntime;
 import com.bugvm.objc.annotation.Method;
 import com.bugvm.objc.annotation.NativeClass;
 import com.bugvm.objc.annotation.Property;
-import com.bugvm.rt.bro.NativeObject;
 import com.bugvm.rt.bro.annotation.Library;
 
 /**

@@ -20,7 +20,6 @@ import com.bugvm.apple.foundation.NSURL;
 import com.bugvm.apple.uikit.UIApplication;
 
 import com.badlogic.gdx.Net;
-import com.badlogic.gdx.Net.Protocol;
 import com.badlogic.gdx.net.NetJavaImpl;
 import com.badlogic.gdx.net.NetJavaServerSocketImpl;
 import com.badlogic.gdx.net.NetJavaSocketImpl;
