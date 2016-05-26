@@ -20,7 +20,7 @@ apply plugin: 'nexus'
 apply plugin: 'signing'
 
 group = 'com.bugvm'
-archivesBaseName = "bugvm-gradle-plugin"
+archivesBaseName = "bugvm-gradle"
 version = "${bugVMVersion}"
 
 sourceCompatibility = '1.8'
@@ -48,8 +48,8 @@ dependencies {
 
 modifyPom {
     project {
-        name 'bugvm-gradle-plugin'
-        description 'bugvm-gradle-plugin'
+        name 'bugvm-gradle'
+        description 'bugvm gradle plugin'
         url 'http://bugvm.com'
 
         licenses {
@@ -76,5 +76,5 @@ modifyPom {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.8'
+    gradleVersion = '2.10'
 }
