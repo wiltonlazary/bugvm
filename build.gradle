@@ -1,0 +1,159 @@
+buildscript {
+    ext {
+        bugVMVersion = '1.2.2-SNAPSHOT'
+    }
+}
+
+allprojects {
+
+    group = 'com.bugvm'
+    version = bugVMVersion
+
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    apply plugin: 'maven'
+    apply plugin: 'signing'
+
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    }
+
+    ext {
+        mavenUrlSnapshot = 'https://oss.sonatype.org/content/repositories/snapshots'
+        mavenUsername = ''
+        mavenPassword = ''
+    }
+
+    publishing {
+        repositories {
+            maven { url mavenUrlSnapshot }
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+}
+
+task buildJars {
+
+    dependsOn publishToMavenLocal, build, clean
+
+    publishToMavenLocal.mustRunAfter build
+    build.mustRunAfter clean
+}
+
+task buildNativeLib {
+
+    dependsOn ':llvm:nativeLib', ':rt:nativeLib'
+
+}
+
+task All  {
+
+    dependsOn buildJars, buildNativeLib
+    buildJars.mustRunAfter buildNativeLib
+
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.2'
+}
+
+archivesBaseName = "bugvm-dist"
+description = """BugVM Dist Package (tar.gz)"""
+
+dependencies {
+    compile project(':compiler')
+    compile project(':apple')
+    compile project(':rt')
+    compile project(':cacerts')
+}
+
+task targz(type: Tar) {
+
+    extension = 'tar.gz'
+    compression = Compression.GZIP
+
+    into ("bugvm-${version}/bin") {
+        from ("bin")
+    }
+
+    into("bugvm-${version}/lib") {
+        from  "compiler/build/libs/bugvm-compiler-${version}.jar" rename { String fileName -> fileName.replace("bugvm-compiler-${version}.jar", "bugvm-compiler.jar") }
+        from("rt/build/libs/bugvm-rt-${version}.jar") rename { String fileName -> fileName.replace("bugvm-rt-${version}.jar", "bugvm-rt.jar") }
+        from("apple/build/libs/bugvm-apple-${version}.jar") rename { String fileName -> fileName.replace("bugvm-apple-${version}.jar", "bugvm-apple.jar") }
+        from("cacerts/build/libs/bugvm-cacerts-${version}.jar") rename { String fileName -> fileName.replace("bugvm-cacerts-${version}.jar", "bugvm-cacerts.jar") }
+    }
+
+    into ("bugvm-${version}/lib/vm") {
+        from ("rt/vm/binaries")
+    }
+
+    into ("bugvm-${version}/modules/licenses/apple") {
+        from ("apple/NOTICE.txt")
+        from ("apple/LICENSE.txt")
+    }
+
+    into ("bugvm-${version}/modules/licenses/llvm") {
+        from ("llvm/NOTICE.txt")
+        from ("llvm/LICENSE.txt")
+    }
+
+    into ("bugvm-${version}/modules/licenses/rt") {
+        from ("rt/NOTICE.txt")
+        from ("rt/LICENSE.txt")
+    }
+
+    into ("bugvm-${version}/modules/licenses/compiler") {
+        from ("compiler/NOTICE.txt")
+        from ("compiler/LICENSE.txt")
+    }
+
+    into ("bugvm-${version}/modules/licenses/vm") {
+        from ("vm/NOTICE.txt")
+        from ("vm/LICENSE.txt")
+    }
+
+    outputs.upToDateWhen { false }
+}
+
+artifacts {
+    archives targz
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+
+            snapshotRepository(url: mavenUrlSnapshot) {
+                authentication(userName: mavenUsername, password: mavenPassword)
+            }
+
+            pom.project {
+                name project.archivesBaseName
+                description project.description
+                url 'https://bugvm.com'
+
+                scm {
+                    url 'https://github.com/bugvm/bugvm.git'
+                    connection 'scm:git:git://github.com/bugvm/bugvm.git'
+                }
+
+                developers {
+                    developer {
+                        id 'bugvm'
+                        name 'The Bug'
+                        email 'bug@bugvm.com'
+                        url 'https://bugvm.com'
+                    }
+                }
+            }
+        }
+    }
+}

@@ -16,42 +16,47 @@
  */
 package com.bugvm.compiler;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import com.bugvm.compiler.config.Config;
 
 import org.apache.commons.io.IOUtils;
 
-/**
- * Reads the compiler version from auto generated <code>version.properties</code> file.
- */
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+
+import static com.bugvm.compiler.config.Config.getImplementationVersion;
+
 public class Version {
 
-    private static String version = null;
-    private static String PROPERTIES_RESOURCE = "/META-INF/bugvm/version.properties";
-
     /**
-     * Returns the version number of the compiler by reading the <code>version.properties</code>
+     * Returns the version number of the compiler by reading the MANIFEST.MF
      * file.
      * 
      * @return the version.
      */
     public static String getVersion() {
-        if (version != null) {
-            return version;
-        }
-        InputStream is = null;
+
+        Class clazz = Version.class;
+        String className = clazz.getSimpleName() + ".class";
+        String classPath = clazz.getResource(className).toString();
+        String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) +
+                "/META-INF/MANIFEST.MF";
+        Manifest manifest = null;
         try {
-            is = Version.class.getResourceAsStream(PROPERTIES_RESOURCE);
-            Properties props = new Properties();
-            props.load(is);
-            version = props.getProperty("version");
-            return version;
+            manifest = new Manifest(new URL(manifestPath).openStream());
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            IOUtils.closeQuietly(is);
+            e.printStackTrace();
         }
+        Attributes attr = manifest.getMainAttributes();
+        return attr.getValue("Implementation-Version");
+
     }
     
     /**
@@ -98,9 +103,5 @@ public class Version {
      */
     public static boolean isOlderThan(String otherVersion) {
         return toLong(getVersion()) < toLong(otherVersion);
-    }
-    
-    public static void main(String[] args) {
-        System.out.println(toLong("1.0.0-alpha-01"));
     }
 }
