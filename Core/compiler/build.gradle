@@ -1,0 +1,65 @@
+apply plugin: "maven"
+apply plugin: "signing"
+apply plugin: "com.bmuschko.nexus"
+
+archivesBaseName = "bugvm-compiler"
+description = """BugVM Compiler"""
+
+dependencies {
+    compile project(":Core:llvm")
+    compile project(":Core:rt")
+    compile project(":Core:soot")
+
+    compile("com.googlecode.plist:dd-plist:1.16")
+    compile("org.apache.commons:commons-exec:1.3")
+    compile("org.apache.commons:commons-lang3:3.4")
+    compile("org.bouncycastle:bcpkix-jdk15on:1.49")
+    compile("org.ow2.asm:asm-debug-all:5.0.3")
+    compile("org.ow2.asm:asm-all:5.0.4")
+    compile("commons-cli:commons-cli:1.3.1")
+    compile("org.simpleframework:simple-xml:2.7.1") {
+        exclude(module: "stax-api")
+        exclude(module: "xpp3")
+        exclude(module: "stax")
+    }
+}
+
+jar {
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude "META-INF/*.RSA", "META-INF/*.SF","META-INF/*.DSA","META-INF/maven/**"
+    manifest {
+        attributes "Main-Class": "com.bugvm.compiler.AppCompiler"
+        attributes "Implementation-Version" : project.version
+    }
+}
+
+modifyPom {
+    project {
+        name project.archivesBaseName
+        description project.description
+        licenses {
+            license {
+                name "GNU General Public License, version 2"
+                url "https://www.gnu.org/licenses/gpl-2.0.html"
+                distribution "repo"
+            }
+        }
+        url "https://bugvm.com"
+
+        scm {
+            url "https://github.com/bugvm/bugvm"
+            connection "scm:git:git://github.com/bugvm/bugvm.git"
+            developerConnection "scm:git:ssh://github.com:bugvm/bugvm.git"
+        }
+
+        developers {
+            developer {
+                id "bugvm"
+                name "We are the BugVM"
+                email "bug@bugvm.com"
+                organization "BugVM"
+                organizationUrl "https://bugvm.com"
+            }
+        }
+    }
+}

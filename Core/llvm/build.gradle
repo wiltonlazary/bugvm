@@ -1,0 +1,55 @@
+apply plugin: "maven"
+apply plugin: "signing"
+apply plugin: "com.bmuschko.nexus"
+
+archivesBaseName = "bugvm-llvm"
+description = """BugVM LLVM Bindings"""
+
+task nativeLib(type:Exec) {
+
+    commandLine "bash", "-c", ". build.sh"
+
+    doLast {
+        copy {
+            from("src/main/resources/com/bugvm/llvm/binding")
+            into "bin"
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes "Implementation-Version" : project.version
+    }
+}
+
+modifyPom {
+    project {
+        name project.archivesBaseName
+        description project.description
+        licenses {
+            license {
+                name "GNU General Public License, version 2"
+                url "https://www.gnu.org/licenses/gpl-2.0.html"
+                distribution "repo"
+            }
+        }
+        url "https://bugvm.com"
+
+        scm {
+            url "https://github.com/bugvm/bugvm"
+            connection "scm:git:git://github.com/bugvm/bugvm.git"
+            developerConnection "scm:git:ssh://github.com:bugvm/bugvm.git"
+        }
+
+        developers {
+            developer {
+                id "bugvm"
+                name "We are the BugVM"
+                email "bug@bugvm.com"
+                organization "BugVM"
+                organizationUrl "https://bugvm.com"
+            }
+        }
+    }
+}

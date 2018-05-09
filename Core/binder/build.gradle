@@ -1,0 +1,109 @@
+apply plugin: "maven"
+apply plugin: "signing"
+apply plugin: "com.bmuschko.nexus"
+
+archivesBaseName = "binder"
+description = """The bridge between BugVM and native libraries"""
+
+configurations {
+    mavenEmbedder
+}
+
+dependencies {
+    compile "org.apache.maven:maven-core:3.3.3"
+    compile "org.apache.maven:maven-plugin-api:3.3.3"
+    compile "org.apache.maven.plugin-tools:maven-plugin-annotations:3.4"
+    compile "org.slf4j:slf4j-api:1.7.25"
+    testCompile "junit:junit:4.12"
+
+    mavenEmbedder "org.apache.maven:maven-embedder:3.3.3"
+    mavenEmbedder "org.slf4j:slf4j-simple:1.7.25"
+    mavenEmbedder "org.eclipse.aether:aether-connector-basic:1.0.2.v20150114"
+    mavenEmbedder "org.eclipse.aether:aether-transport-wagon:1.0.2.v20150114"
+    mavenEmbedder "org.apache.maven.wagon:wagon-http:2.9:shaded"
+    mavenEmbedder "org.apache.maven.wagon:wagon-provider-api:2.9"
+}
+
+install.repositories.mavenInstaller.pom.with {
+    groupId = project.group
+    artifactId = project.name
+    version = project.version
+    packaging = "maven-plugin"
+}
+
+task generatePluginDescriptor(type: JavaExec, dependsOn: compileJava) {
+    def pomFile = file("$buildDir/pom.xml")
+    def pluginDescriptorFile = new File(project.compileJava.destinationDir, "META-INF/maven/plugin.xml")
+    def directory = buildDir.canonicalPath
+    def outputDirectory = compileJava.destinationDir.canonicalPath
+
+    inputs.files project.compileJava.outputs.files
+    outputs.file pluginDescriptorFile
+
+    classpath = configurations.mavenEmbedder
+    main = "org.apache.maven.cli.MavenCli"
+    systemProperties["maven.multiModuleProjectDirectory"] = projectDir
+    args = [
+            "--errors",
+            "--batch-mode",
+            "--file", "${buildDir}/pom.xml",
+            "org.apache.maven.plugins:maven-plugin-plugin:3.4:descriptor"
+    ]
+
+    doFirst {
+        // we have to do it in this cryptic way, instead of
+        // ```
+        // project {
+        //     build {
+        //        directory = directory
+        //        outputDirectory = outputDirectory
+        //     }
+        // }
+        // because MavenModel already defines build and so it will
+        // result in No such property: _SCRIPT_CLASS_NAME_ for class: org.apache.maven.model.Model
+        install.repositories
+                .mavenInstaller
+                .pom
+                .withXml {
+            asNode().appendNode("build")
+                    .with {
+                appendNode("directory", directory)
+                appendNode("outputDirectory", outputDirectory)
+            }
+        }
+        .writeTo(pomFile)
+    }
+}
+
+jar.dependsOn(generatePluginDescriptor)
+
+modifyPom {
+    project {
+        name project.archivesBaseName
+        description project.description
+        licenses {
+            license {
+                name "Apache License, Version 2.0"
+                url "http://www.apache.org/licenses/LICENSE-2.0"
+                distribution "repo"
+            }
+        }
+        url "https://bugvm.com"
+
+        scm {
+            url "https://github.com/bugvm/bugvm"
+            connection "scm:git:git://github.com/bugvm/bugvm.git"
+            developerConnection "scm:git:ssh://github.com:bugvm/bugvm.git"
+        }
+
+        developers {
+            developer {
+                id "bugvm"
+                name "We are the BugVM"
+                email "bug@bugvm.com"
+                organization "BugVM"
+                organizationUrl "https://bugvm.com"
+            }
+        }
+    }
+}

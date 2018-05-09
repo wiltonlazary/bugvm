@@ -1,159 +1,184 @@
 buildscript {
     ext {
-        bugVMVersion = "1.2.3-SNAPSHOT"
+        bugvm_version = "1.2.9"
+        kotlin_version = "1.2.40"
+    }
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath("com.bmuschko:gradle-nexus-plugin:2.3.1")
+        classpath("io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.7.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.2"
     }
 }
 
 allprojects {
 
     group = "com.bugvm"
-    version = bugVMVersion
+    version = bugvm_version
 
-    apply plugin: "java"
-    apply plugin: "maven-publish"
-    apply plugin: "maven"
-    apply plugin: "signing"
+    apply plugin: "kotlin"
 
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-    }
-
-    ext {
-        mavenUrlSnapshot = "https://oss.sonatype.org/content/repositories/snapshots"
-        mavenUsername = ""
-        mavenPassword = ""
-    }
-
-    publishing {
-        repositories {
-            maven { url mavenUrlSnapshot }
+    compileKotlin {
+        kotlinOptions {
+            jvmTarget = "1.8"
         }
     }
 
-    tasks.withType(JavaCompile) {
-        options.encoding = "UTF-8"
+    compileTestKotlin {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
     }
+
+    javadoc {
+        exclude "**"
+    }
+
+    repositories {
+        mavenLocal()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    }
+
 }
 
-task buildJars {
+apply plugin: "maven"
+apply plugin: "signing"
+apply plugin: "com.bmuschko.nexus"
+apply plugin: "io.codearte.nexus-staging"
 
-    dependsOn publishToMavenLocal, build, clean
+defaultTasks "install"
 
-    publishToMavenLocal.mustRunAfter build
+task jars {
+    dependsOn install, build, clean
+    install.mustRunAfter build
     build.mustRunAfter clean
 }
 
-task buildNativeLib {
-
-    dependsOn ":llvm:nativeLib", ":rt:nativeLib"
-
+task rt {
+    dependsOn ":Core:rt:nativeLib"
 }
 
-task All  {
-
-    dependsOn buildJars, buildNativeLib
-    buildJars.mustRunAfter buildNativeLib
-
+task llvm {
+    dependsOn ":Core:llvm:nativeLib"
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = "3.2.1"
+task all  {
+    dependsOn jars, rt, llvm
+    jars.mustRunAfter llvm
+    llvm.mustRunAfter rt
 }
 
 archivesBaseName = "bugvm-dist"
-description = "BugVM Dist Package (tar.gz)"
+description = "BugVM Dist Package (tgz)"
 
 dependencies {
-    compile project(":compiler")
-    compile project(":apple")
-    compile project(":rt")
-    compile project(":cacerts")
+    compile project(":Core:compiler")
+    compile project(":Binding:apple")
+    compile project(":Core:rt")
 }
 
-task targz(type: Tar) {
+task tgzTask(type: Tar) {
 
-    extension = "tar.gz"
+    extension = "tgz"
     compression = Compression.GZIP
 
     into ("bugvm-${version}/bin") {
-        from ("bin")
+        from ("Core/bin")
     }
 
     into("bugvm-${version}/lib") {
-        from  "compiler/build/libs/bugvm-compiler-${version}.jar" rename { String fileName -> fileName.replace("bugvm-compiler-${version}.jar", "bugvm-compiler.jar") }
-        from("rt/build/libs/bugvm-rt-${version}.jar") rename { String fileName -> fileName.replace("bugvm-rt-${version}.jar", "bugvm-rt.jar") }
-        from("apple/build/libs/bugvm-apple-${version}.jar") rename { String fileName -> fileName.replace("bugvm-apple-${version}.jar", "bugvm-apple.jar") }
-        from("cacerts/build/libs/bugvm-cacerts-${version}.jar") rename { String fileName -> fileName.replace("bugvm-cacerts-${version}.jar", "bugvm-cacerts.jar") }
+        from  "Core/compiler/build/libs/bugvm-compiler-${version}.jar" rename { String fileName -> fileName.replace("bugvm-compiler-${version}.jar", "bugvm-compiler.jar") }
+        from("Core/rt/build/libs/bugvm-rt-${version}.jar") rename { String fileName -> fileName.replace("bugvm-rt-${version}.jar", "bugvm-rt.jar") }
+        from("Binding/apple/build/libs/bugvm-apple-${version}.jar") rename { String fileName -> fileName.replace("bugvm-apple-${version}.jar", "bugvm-apple.jar") }
     }
 
     into ("bugvm-${version}/lib/vm") {
-        from ("rt/vm/binaries")
+        from ("Core/rt/vm/binaries")
     }
 
     into ("bugvm-${version}/modules/licenses/apple") {
-        from ("apple/NOTICE.txt")
-        from ("apple/LICENSE.txt")
+        from ("Binding/apple/NOTICE.txt")
+        from ("Binding/apple/LICENSE.txt")
     }
 
     into ("bugvm-${version}/modules/licenses/llvm") {
-        from ("llvm/NOTICE.txt")
-        from ("llvm/LICENSE.txt")
+        from ("Core/llvm/NOTICE.txt")
+        from ("Core/llvm/LICENSE.txt")
     }
 
     into ("bugvm-${version}/modules/licenses/rt") {
-        from ("rt/NOTICE.txt")
-        from ("rt/LICENSE.txt")
+        from ("Core/rt/NOTICE.txt")
+        from ("Core/rt/LICENSE.txt")
     }
 
     into ("bugvm-${version}/modules/licenses/compiler") {
-        from ("compiler/NOTICE.txt")
-        from ("compiler/LICENSE.txt")
+        from ("Core/compiler/NOTICE.txt")
+        from ("Core/compiler/LICENSE.txt")
     }
 
     into ("bugvm-${version}/modules/licenses/vm") {
-        from ("vm/NOTICE.txt")
-        from ("vm/LICENSE.txt")
+        from ("Core/vm/NOTICE.txt")
+        from ("Core/vm/LICENSE.txt")
     }
 
     outputs.upToDateWhen { false }
 }
 
 artifacts {
-    archives targz
+    archives tgzTask
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-
-            snapshotRepository(url: mavenUrlSnapshot) {
-                authentication(userName: mavenUsername, password: mavenPassword)
-            }
-
-            pom.project {
-                name project.archivesBaseName
-                description project.description
-                url "https://bugvm.com"
-
-                scm {
-                    url "https://github.com/bugvm/bugvm.git"
-                    connection "scm:git:git://github.com/bugvm/bugvm.git"
-                }
-
-                developers {
-                    developer {
-                        id "bugvm"
-                        name "The Bug"
-                        email "bug@bugvm.com"
-                        url "https://bugvm.com"
-                    }
-                }
+modifyPom {
+    project {
+        name project.archivesBaseName
+        description project.description
+        licenses {
+            license {
+                name "GNU General Public License, version 2"
+                url "https://www.gnu.org/licenses/gpl-2.0.html"
+                distribution "repo"
             }
         }
+        url "https://bugvm.com"
+
+        scm {
+            url "https://github.com/bugvm/bugvm"
+            connection "scm:git:git://github.com/bugvm/bugvm.git"
+            developerConnection "scm:git:ssh://github.com:bugvm/bugvm.git"
+        }
+
+        developers {
+            developer {
+                id "bugvm"
+                name "We are the BugVM"
+                email "bug@bugvm.com"
+                organization "BugVM"
+                organizationUrl "https://bugvm.com"
+            }
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = "4.7"
+    distributionType = Wrapper.DistributionType.ALL
+}
+
+task listJars {
+    doLast {
+        configurations.runtime.each { File file -> println file.name }
     }
 }
