@@ -12,6 +12,15 @@ build
 local.properties
 
 # Shared Libraries
-*.a
-*.so
-*.dylib
+#*.a
+#*.so
+#*.dylib
+.classpath
+.settings
+.project
+*.class
+Core/compiler/bin/
+Core/rt/bin/
+Core/llvm/bin/
+Core/soot/bin/
+Plugin/Gradle/bin/

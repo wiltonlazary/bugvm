@@ -1,7 +1,7 @@
 buildscript {
     ext {
-        bugvm_version = "1.2.9"
-        kotlin_version = "1.2.40"
+        bugvm_version = "1.2.10-SNAPSHOT"
+        kotlin_version = "1.2.41"
     }
     repositories {
         mavenCentral()
@@ -155,18 +155,18 @@ modifyPom {
         url "https://bugvm.com"
 
         scm {
-            url "https://github.com/bugvm/bugvm"
-            connection "scm:git:git://github.com/bugvm/bugvm.git"
-            developerConnection "scm:git:ssh://github.com:bugvm/bugvm.git"
+            url "https://github.com/ibinti/bugvm"
+            connection "scm:git:git://github.com/ibinti/bugvm.git"
+            developerConnection "scm:git:ssh://github.com:ibinti/bugvm.git"
         }
 
         developers {
             developer {
                 id "bugvm"
                 name "We are the BugVM"
-                email "bug@bugvm.com"
-                organization "BugVM"
-                organizationUrl "https://bugvm.com"
+                email "bugvm@ibinti.com"
+                organization "ibinti"
+                organizationUrl "https://ibinti.com"
             }
         }
     }
