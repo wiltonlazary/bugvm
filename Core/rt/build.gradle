@@ -26,12 +26,11 @@ shadowJar {
 task nativeLib(type:Exec) {
     workingDir "vm"
     commandLine "bash", "-c", ". build.sh"
-    doLast {
-        copy {
-            from("vm/binaries")
-            into "bin"
-        }
-    }
+}
+
+task nativeLibClean(type:Exec) {
+    workingDir "vm"
+    commandLine "bash", "-c", ". build.sh --clean"
 }
 
 modifyPom {
@@ -45,7 +44,7 @@ modifyPom {
                 distribution "repo"
             }
         }
-        url "https://bugvm.com"
+        url "https://ibinti.com/bugvm"
 
         scm {
             url "https://github.com/ibinti/bugvm"
@@ -56,10 +55,10 @@ modifyPom {
         developers {
             developer {
                 id "bugvm"
-                name "We are the BugVM"
-                email "bug@bugvm.com"
-                organization "BugVM"
-                organizationUrl "https://bugvm.com"
+                name "bugvm"
+                email "bugvm@ibinti.com"
+                organization "ibinti.com"
+                organizationUrl "https://ibinti.com"
             }
         }
     }

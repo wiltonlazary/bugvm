@@ -10,13 +10,11 @@ Options:
   --build=[release|debug] Specifies the build type. If not set both release
                           and debug versions of the libraries will be built.
   --target=...            Specifies the target(s) to build for. Supported 
-                          targets are macosx-x86_64, ios-x86_64,
-                          ios-x86, ios-thumbv7, ios-arm64, linux-x86_64.
+                          targets are macosx-x86_64, ios-x86_64, ios-arm64, linux-x86_64.
                           Enclose multiple targets in quotes and
                           separate with spaces or specify --target multiple
                           times. If not set the current host OS determines the
-                          targets. macosx-x86_64, ios-x86_64,
-                          ios-x86, ios-thumbv7 and ios-arm64 on MacOSX and
+                          targets. macosx-x86_64, ios-x86_64, and ios-arm64 on MacOSX and
                           linux-x86_64 on Linux.
   --verbose               Enable verbose output during the build.
   --clean                 Cleans the build dir before starting the build.
@@ -48,12 +46,12 @@ if [ $(uname) = 'Darwin' ]; then
   if xcrun --sdk macosx --show-sdk-version &> /dev/null; then
     MACOSX_SDK_VERSION=$(xcrun --sdk macosx --show-sdk-version)
   else
-    MACOSX_SDK_VERSION=10.7
+    MACOSX_SDK_VERSION=10.13
   fi
   if xcrun --sdk iphoneos --show-sdk-version &> /dev/null; then
     IOS_SDK_VERSION=$(xcrun --sdk iphoneos --show-sdk-version)
   else
-    IOS_SDK_VERSION=7.0
+    IOS_SDK_VERSION=12.0
   fi
   if xcrun -f clang &> /dev/null; then
     CC=$(xcrun -f clang)
@@ -74,11 +72,7 @@ if [ "x$TARGETS" = 'x' ]; then
   OS=$(uname)
   case $OS in
   Darwin)
-    if [ $MACOSX_SDK_VERSION = 10.7 ] ; then
-      TARGETS="ios-thumbv7 ios-x86 macosx-x86_64"
-    else
-      TARGETS="ios-thumbv7 ios-arm64 ios-x86_64 ios-x86 macosx-x86_64"
-    fi
+    TARGETS="ios-arm64 ios-x86_64 macosx-x86_64"
     ;;
   Linux)
     TARGETS="linux-x86_64"
@@ -90,12 +84,13 @@ if [ "x$TARGETS" = 'x' ]; then
   esac
 fi
 if [ "x$BUILDS" = 'x' ]; then
-  BUILDS="debug release"
+  BUILDS="release"
+  #BUILDS="debug release"
 fi
 
-# Validate targets #linux-(x86_64|x86)
+# Validate targets #linux-(x86_64)
 for T in $TARGETS; do
-  if ! [[ $T =~ (macosx-(x86_64))|(ios-(x86_64|x86|thumbv7|arm64))|(linux-(x86_64|x86)) ]] ; then
+  if ! [[ $T =~ (macosx-(x86_64))|(ios-(x86_64|arm64))|(linux-(x86_64)) ]] ; then
     echo "Unsupported target: $T"
     exit 1
   fi
